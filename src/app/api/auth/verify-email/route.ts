@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
     
     await user.save();
 
-    logger.authEvent('email_verified', user._id.toString(), request.ip || 'unknown', { email: user.email });
+    const clientIP = request.headers.get('x-forwarded-for') || 'unknown';
+    logger.authEvent('email_verified', user._id.toString(), clientIP, { email: user.email });
 
     return NextResponse.json({
       success: true,
