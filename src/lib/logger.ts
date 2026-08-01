@@ -105,7 +105,7 @@ class Logger {
   }
 
   // Log authentication events
-  authEvent(event: 'login' | 'register' | 'logout' | 'failed_login', userId?: string, ip?: string, details?: Record<string, any>) {
+  authEvent(event: 'login' | 'register' | 'logout' | 'failed_login' | 'email_verified', userId?: string, ip?: string, details?: Record<string, any>) {
     this.info(`Auth Event: ${event}`, {
       ...details,
       ip
