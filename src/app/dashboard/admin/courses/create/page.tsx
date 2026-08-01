@@ -126,16 +126,18 @@ export default function CreateCoursePage() {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('/api/upload/profile-image', {
+      const response = await fetch('/api/upload/thumbnail', {
         method: 'POST',
         credentials: 'include',
         body: formData
       });
 
       const data = await response.json();
-      if (data.success) {
-        setFormData(prev => ({ ...prev, thumbnail: data.image.url }));
+      if (data.success && data.url) {
+        setFormData(prev => ({ ...prev, thumbnail: data.url }));
         alert('Thumbnail uploaded successfully!');
+      } else {
+        alert(data.message || 'Failed to upload thumbnail');
       }
     } catch (error) {
       console.error('Upload error:', error);

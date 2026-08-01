@@ -23,6 +23,19 @@ interface IUser {
   hourlyRate?: number;
   experience?: number;
   qualifications?: string[];
+  ageGroups?: string;
+  teachingLevels?: string;
+  teachingHistory?: string;
+  availabilityText?: string;
+  discussionMethod?: string;
+  documents?: {
+    cv?: string;
+    dbs?: string;
+    rightToWork?: string;
+    qualificationEvidence?: string;
+  };
+  applicationConsent?: boolean;
+  applicationStatus?: 'pending' | 'under_review' | 'approved' | 'rejected';
   subscriptionStatus?: string;
   stripeCustomerId?: string;
   subscriptionId?: mongoose.Types.ObjectId;
@@ -129,24 +142,28 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>({
     default: null
   },
   // For tutors
-  bio: {
+  bio: { type: String, default: '' },
+  subjects: [{ type: String }],
+  hourlyRate: { type: Number, default: 35 },
+  experience: { type: Number, default: 1 },
+  qualifications: [{ type: String }],
+  ageGroups: { type: String, default: '' },
+  teachingLevels: { type: String, default: '' },
+  teachingHistory: { type: String, default: '' },
+  availabilityText: { type: String, default: '' },
+  discussionMethod: { type: String, default: 'Email' },
+  documents: {
+    cv: { type: String, default: '' },
+    dbs: { type: String, default: '' },
+    rightToWork: { type: String, default: '' },
+    qualificationEvidence: { type: String, default: '' },
+  },
+  applicationConsent: { type: Boolean, default: false },
+  applicationStatus: {
     type: String,
-    default: ''
+    enum: ['pending', 'under_review', 'approved', 'rejected'],
+    default: 'pending'
   },
-  subjects: [{
-    type: String
-  }],
-  hourlyRate: {
-    type: Number,
-    default: 0
-  },
-  experience: {
-    type: Number,
-    default: 0
-  },
-  qualifications: [{
-    type: String
-  }],
   
   // Subscription & Payment
   subscriptionStatus: {
@@ -343,7 +360,16 @@ const courseSchema = new mongoose.Schema({
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'CourseCategory',
-    required: true
+    required: false
+  },
+  webinarData: {
+    audience: String,
+    date: String,
+    startTime: String,
+    endTime: String,
+    speaker: String,
+    includedWithMembership: Boolean,
+    recordingAvailable: Boolean
   },
   instructor: {
     type: mongoose.Schema.Types.ObjectId,

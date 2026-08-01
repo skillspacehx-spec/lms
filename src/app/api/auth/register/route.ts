@@ -127,11 +127,38 @@ export async function POST(request: NextRequest) {
       name: user.name 
     });
 
-    return NextResponse.json({
+    // Generate token
+    const token = generateToken({
+      userId: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role
+    });
+
+    const redirectTo = role === 'tutor' ? '/onboarding/tutor' : '/verify-pending';
+
+    const response = NextResponse.json({
       success: true,
-      message: 'User created successfully. Please check your email to verify your account.',
-      redirectTo: '/verify-pending'
+      message: 'User created successfully.',
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified
+      },
+      redirectTo
     }, { status: 201 });
+
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/'
+    });
+
+    return response;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

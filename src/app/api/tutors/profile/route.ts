@@ -24,38 +24,45 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { bio, subjects, hourlyRate, experience, qualifications } = body;
-
-    // Validate required fields
-    if (!bio || !subjects || !Array.isArray(subjects) || subjects.length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'Bio and at least one subject are required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate hourly rate
-    if (!hourlyRate || hourlyRate < 1 || hourlyRate > 200) {
-      return NextResponse.json(
-        { success: false, message: 'Hourly rate must be between £1 and £200' },
-        { status: 400 }
-      );
-    }
+    const { 
+      phone,
+      bio, 
+      subjects, 
+      hourlyRate, 
+      experience, 
+      qualifications,
+      ageGroups,
+      teachingLevels,
+      teachingHistory,
+      availabilityText,
+      discussionMethod,
+      documents,
+      applicationConsent
+    } = body;
 
     // Update tutor profile
     const updatedUser = await User.findByIdAndUpdate(
       user.userId,
       {
         $set: {
-          bio,
-          subjects,
-          hourlyRate,
-          experience: experience || 0,
-          qualifications: qualifications || [],
-          isVerified: true // Ensure tutor is verified after completing profile
+          phone: phone || '',
+          bio: bio || '',
+          subjects: Array.isArray(subjects) ? subjects : [],
+          hourlyRate: parseFloat(hourlyRate) || 35,
+          experience: parseInt(experience) || 1,
+          qualifications: Array.isArray(qualifications) ? qualifications : [],
+          ageGroups: ageGroups || '',
+          teachingLevels: teachingLevels || '',
+          teachingHistory: teachingHistory || '',
+          availabilityText: availabilityText || '',
+          discussionMethod: discussionMethod || 'Email',
+          documents: documents || {},
+          applicationConsent: applicationConsent !== undefined ? applicationConsent : true,
+          onboardingCompleted: true,
+          applicationStatus: 'under_review'
         }
       },
-      { new: true, select: 'name email bio subjects hourlyRate experience qualifications isVerified' }
+      { new: true }
     );
 
     if (!updatedUser) {

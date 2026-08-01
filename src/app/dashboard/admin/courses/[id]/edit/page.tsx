@@ -632,7 +632,7 @@ export default function EditCoursePage() {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('/api/upload/profile-image', {
+      const response = await fetch('/api/upload/thumbnail', {
         method: 'POST',
         credentials: 'include',
         body: formData
@@ -640,8 +640,8 @@ export default function EditCoursePage() {
 
       const data = await response.json();
 
-      if (data.success && data.imageUrl) {
-        setFormData(prev => ({ ...prev, thumbnail: data.imageUrl }));
+      if (data.success && data.url) {
+        setFormData(prev => ({ ...prev, thumbnail: data.url }));
         alert('Thumbnail uploaded successfully!');
       } else {
         alert(data.message || 'Failed to upload thumbnail');

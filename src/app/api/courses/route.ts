@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const type = searchParams.get('type');
+    const excludeType = searchParams.get('excludeType');
     const instructor = searchParams.get('instructor');
     const featured = searchParams.get('featured');
     const tags = searchParams.get('tags');
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
     
     if (category) filter.category = category;
     if (type) filter.type = type;
+    if (excludeType) filter.type = { $ne: excludeType };
     if (instructor) filter.instructor = instructor;
     if (featured === 'true') filter.isFeatured = true;
     if (tags) filter.tags = { $in: tags.split(',').map((t: string) => new RegExp(t.trim(), 'i')) };

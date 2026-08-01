@@ -1,14 +1,139 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, CalendarDays, GraduationCap, Lock, MonitorPlay, ShoppingCart, Users } from 'lucide-react';
+import { ArrowRight, CalendarDays, GraduationCap, Lock, MonitorPlay, ShoppingCart, Users, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-const webinars = [
-  { day: '22', month: 'May', time: '7:00 PM - 8:00 PM', title: 'Supporting Children Through Exam Stress', audience: 'Parents', speaker: 'Dr Sarah Collins' },
-  { day: '05', month: 'Jun', time: '7:00 PM - 8:30 PM', title: 'Understanding SEND in Mainstream Education', audience: 'Educators', speaker: 'James Wilson' },
-  { day: '19', month: 'Jun', time: '7:00 PM - 8:00 PM', title: 'Creative Pedagogy in the Classroom', audience: 'Teachers', speaker: 'Emma Riley' },
-];
+interface Webinar {
+  _id: string;
+  title: string;
+  description: string;
+  duration: number;
+  price: number;
+  isFeatured: boolean;
+  thumbnail?: string;
+  webinarData?: {
+    audience?: string;
+    date?: string;
+    startTime?: string;
+    endTime?: string;
+    speaker?: string;
+    includedWithMembership?: boolean;
+    recordingAvailable?: boolean;
+  };
+  instructor?: {
+    name: string;
+    avatar?: string;
+  };
+  rating?: {
+    average: number;
+    count: number;
+  };
+  enrolledStudents?: string[];
+  createdAt?: string;
+}
+
+function WebinarCard({ webinar }: { webinar: Webinar }) {
+  const wd = webinar.webinarData;
+
+  // Parse date parts from webinarData.date (e.g. "2026-05-22") or fall back to createdAt
+  let day = '--';
+  let month = '---';
+  if (wd?.date) {
+    try {
+      const d = new Date(wd.date);
+      day = String(d.getDate()).padStart(2, '0');
+      month = d.toLocaleString('en-GB', { month: 'short' }).toUpperCase();
+    } catch {
+      // keep defaults
+    }
+  }
+
+  const timeStr = wd?.startTime && wd?.endTime
+    ? `${wd.startTime} - ${wd.endTime}`
+    : `${webinar.duration}m session`;
+
+  const speaker = wd?.speaker || webinar.instructor?.name || 'Expert Speaker';
+  const audience = wd?.audience || 'All';
+
+  return (
+    <article className={`relative border bg-white p-5 shadow-sm transition-all hover:shadow-md ${webinar.isFeatured ? 'border-[#7AC2F9] ring-1 ring-[#7AC2F9]/30' : 'border-gray-200'}`}>
+      {webinar.isFeatured && (
+        <span className="absolute -top-3 right-4 flex items-center gap-1 rounded-full bg-[#7AC2F9] px-3 py-0.5 text-xs font-bold text-[#191919]">
+          <Star className="h-3 w-3 fill-current" /> Featured
+        </span>
+      )}
+      <div className="flex items-start justify-between gap-4">
+        <div className="text-center">
+          <div className="text-3xl font-black text-[#0F76B7]">{day}</div>
+          <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{month}</div>
+        </div>
+        <div className="rounded-full bg-[#EAF6FF] p-3 text-[#2E9DDA]">
+          <CalendarDays className="h-5 w-5" />
+        </div>
+      </div>
+      <p className="mt-5 text-xs font-bold uppercase tracking-wide text-[#2E9DDA]">Live Webinar</p>
+      <h3 className="mt-2 text-lg font-black leading-snug">{webinar.title}</h3>
+      <p className="mt-2 text-sm text-gray-600">{timeStr}</p>
+      <p className="mt-4 text-sm text-gray-700">{speaker} — {audience}</p>
+      {webinar.price > 0 && (
+        <p className="mt-2 text-sm font-bold text-[#0F76B7]">£{Number(webinar.price).toFixed(2)}</p>
+      )}
+      {webinar.price === 0 && (
+        <p className="mt-2 text-sm font-bold text-green-600">Free</p>
+      )}
+      <Link href={`/courses/${webinar._id}`} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#2E9DDA]">
+        Register <ArrowRight className="h-4 w-4" />
+      </Link>
+    </article>
+  );
+}
+
+function WebinarSkeleton() {
+  return (
+    <div className="animate-pulse border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div className="h-10 w-12 rounded bg-gray-200" />
+        <div className="h-10 w-10 rounded-full bg-gray-200" />
+      </div>
+      <div className="mt-5 h-3 w-20 rounded bg-gray-200" />
+      <div className="mt-2 h-5 w-3/4 rounded bg-gray-200" />
+      <div className="mt-2 h-3 w-1/2 rounded bg-gray-200" />
+      <div className="mt-4 h-3 w-2/3 rounded bg-gray-200" />
+      <div className="mt-5 h-4 w-16 rounded bg-gray-200" />
+    </div>
+  );
+}
 
 export default function WebinarsPage() {
+  const [webinars, setWebinars] = useState<Webinar[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWebinars = async () => {
+      try {
+        const res = await fetch('/api/courses?type=live_session&limit=50');
+        if (res.ok) {
+          const data = await res.json();
+          const all: Webinar[] = data.courses || [];
+          // Sort: featured first, then by date
+          all.sort((a, b) => {
+            if (a.isFeatured && !b.isFeatured) return -1;
+            if (!a.isFeatured && b.isFeatured) return 1;
+            return 0;
+          });
+          setWebinars(all);
+        }
+      } catch (e) {
+        console.error('Failed to fetch webinars:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWebinars();
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#F5FBFF] text-[#111827]">
       <section className="bg-white">
@@ -35,37 +160,27 @@ export default function WebinarsPage() {
       </section>
 
       <section id="webinars" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#2E9DDA]">Live webinars</p>
-            <h2 className="mt-2 text-2xl font-black md:text-3xl">Featured upcoming webinars</h2>
+        <div className="mb-6">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#2E9DDA]">Live webinars</p>
+          <h2 className="mt-2 text-2xl font-black md:text-3xl">All upcoming webinars</h2>
+        </div>
+
+        {loading ? (
+          <div className="grid gap-5 md:grid-cols-3">
+            {[1, 2, 3].map((i) => <WebinarSkeleton key={i} />)}
           </div>
-          {/* <Link href="#" className="hidden items-center gap-2 text-sm font-bold text-[#2E9DDA] sm:inline-flex">
-             <ArrowRight className="h-4 w-4" />
-          </Link> */}
-        </div>
-        <div className="grid gap-5 md:grid-cols-3">
-          {webinars.map((webinar) => (
-            <article key={webinar.title} className="border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div className="text-center">
-                  <div className="text-3xl font-black text-[#0F76B7]">{webinar.day}</div>
-                  <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{webinar.month}</div>
-                </div>
-                <div className="rounded-full bg-[#EAF6FF] p-3 text-[#2E9DDA]">
-                  <CalendarDays className="h-5 w-5" />
-                </div>
-              </div>
-              <p className="mt-5 text-xs font-bold uppercase tracking-wide text-[#2E9DDA]">Live webinar</p>
-              <h3 className="mt-2 text-lg font-black leading-snug">{webinar.title}</h3>
-              <p className="mt-2 text-sm text-gray-600">{webinar.time}</p>
-              <p className="mt-4 text-sm text-gray-700">{webinar.speaker} - {webinar.audience}</p>
-              <Link href="/register" className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#2E9DDA]">
-                Register <ArrowRight className="h-4 w-4" />
-              </Link>
-            </article>
-          ))}
-        </div>
+        ) : webinars.length === 0 ? (
+          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
+            <CalendarDays className="mx-auto h-12 w-12 text-gray-300" />
+            <p className="mt-4 text-gray-500">No webinars available yet. Check back soon!</p>
+          </div>
+        ) : (
+          <div className="grid gap-5 md:grid-cols-3">
+            {webinars.map((webinar) => (
+              <WebinarCard key={webinar._id} webinar={webinar} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
@@ -91,7 +206,7 @@ export default function WebinarsPage() {
       </section>
 
       <section id="access" className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-black md:text-3xl">Membership & access</h2>
+        <h2 className="text-2xl font-black md:text-3xl">Membership &amp; access</h2>
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
           <div className="border border-[#BDE7FF] bg-[#EAF6FF] p-6 shadow-sm">
             <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white text-[#2E9DDA]">

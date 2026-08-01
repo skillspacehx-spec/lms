@@ -2,9 +2,9 @@ import { v2 as cloudinary } from 'cloudinary';
 
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME?.trim(),
+  api_key: process.env.CLOUDINARY_API_KEY?.trim(),
+  api_secret: process.env.CLOUDINARY_API_SECRET?.trim(),
 });
 
 export interface CloudinaryUploadResult {
@@ -28,23 +28,20 @@ export class MediaService {
       folder?: string;
       public_id?: string;
       transformation?: any;
-      quality?: string | number;
     } = {}
   ): Promise<CloudinaryUploadResult> {
     try {
-      const uploadOptions = {
-        resource_type: 'image' as const,
+      const uploadOptions: any = {
+        resource_type: 'image',
         folder: options.folder || 'learning-hub/images',
-        public_id: options.public_id,
-        transformation: options.transformation,
-        quality: options.quality || 'auto:good',
-        format: 'jpg', // Auto-convert to jpg for optimization
       };
 
-      const result = await cloudinary.uploader.upload(
-        typeof file === 'string' ? file : `data:image/jpeg;base64,${file.toString('base64')}`,
-        uploadOptions
-      );
+      if (options.public_id) uploadOptions.public_id = options.public_id;
+      if (options.transformation) uploadOptions.transformation = options.transformation;
+
+      const dataURI = typeof file === 'string' ? file : `data:image/jpeg;base64,${file.toString('base64')}`;
+
+      const result = await cloudinary.uploader.upload(dataURI, uploadOptions);
 
       return result as CloudinaryUploadResult;
     } catch (error: any) {
@@ -59,29 +56,19 @@ export class MediaService {
     options: {
       folder?: string;
       public_id?: string;
-      quality?: string;
-      format?: string;
     } = {}
   ): Promise<CloudinaryUploadResult> {
     try {
-      const uploadOptions = {
-        resource_type: 'video' as const,
+      const uploadOptions: any = {
+        resource_type: 'video',
         folder: options.folder || 'learning-hub/videos',
-        public_id: options.public_id,
-        quality: options.quality || 'auto:good',
-        format: options.format || 'mp4',
-        transformation: [
-          {
-            quality: 'auto:good',
-            format: 'mp4'
-          }
-        ]
       };
 
-      const result = await cloudinary.uploader.upload(
-        typeof file === 'string' ? file : `data:video/mp4;base64,${file.toString('base64')}`,
-        uploadOptions
-      );
+      if (options.public_id) uploadOptions.public_id = options.public_id;
+
+      const dataURI = typeof file === 'string' ? file : `data:video/mp4;base64,${file.toString('base64')}`;
+
+      const result = await cloudinary.uploader.upload(dataURI, uploadOptions);
 
       return result as CloudinaryUploadResult;
     } catch (error: any) {
@@ -96,21 +83,19 @@ export class MediaService {
     options: {
       folder?: string;
       public_id?: string;
-      format?: string;
     } = {}
   ): Promise<CloudinaryUploadResult> {
     try {
-      const uploadOptions = {
-        resource_type: 'raw' as const,
+      const uploadOptions: any = {
+        resource_type: 'raw',
         folder: options.folder || 'learning-hub/documents',
-        public_id: options.public_id,
-        format: options.format,
       };
 
-      const result = await cloudinary.uploader.upload(
-        typeof file === 'string' ? file : `data:application/pdf;base64,${file.toString('base64')}`,
-        uploadOptions
-      );
+      if (options.public_id) uploadOptions.public_id = options.public_id;
+
+      const dataURI = typeof file === 'string' ? file : `data:application/pdf;base64,${file.toString('base64')}`;
+
+      const result = await cloudinary.uploader.upload(dataURI, uploadOptions);
 
       return result as CloudinaryUploadResult;
     } catch (error: any) {

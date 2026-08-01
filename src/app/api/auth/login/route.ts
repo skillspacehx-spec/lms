@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Determine redirect URL - only new users go to onboarding
-    const redirectTo = !hasCompletedOnboarding && (user.role === 'student' || user.role === 'parent')
+    const redirectTo = !hasCompletedOnboarding && (user.role === 'student' || user.role === 'parent' || user.role === 'tutor')
       ? `/onboarding/${user.role}`
       : `/dashboard/${user.role}`;
 

@@ -33,9 +33,9 @@ export async function GET(request: NextRequest) {
       category?: string;
       $or?: Array<{ title?: { $regex: string; $options: string } }>;
     }
-    
+
     const filter: CourseFilter = {};
-    
+
     if (status === 'active') filter.isActive = true;
     if (status === 'inactive') filter.isActive = false;
     if (category) filter.category = category;
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     // Get module counts for each course
     const coursesWithModules = await Promise.all(
       courses.map(async (course) => {
-        const moduleCount = await CourseContent.countDocuments({ 
+        const moduleCount = await CourseContent.countDocuments({
           course: course._id
           // Don't filter by isActive - count all modules
         });
@@ -174,34 +174,69 @@ export async function POST(request: NextRequest) {
       tags,
       maxStudents,
       isActive,
-      isFeatured
+      isFeatured,
+      webinarData
     } = body;
 
-    // Validate required fields
-    if (!title || !description || !category || !type || !duration) {
-      return NextResponse.json(
-        { success: false, message: 'Missing required fields: title, description, category, type, duration' },
-        { status: 400 }
-      );
+    const isWebinar = type === 'live_session';
+
+    // Validate required fields based on course type vs webinar
+    if (isWebinar) {
+      if (!title || !description || !type) {
+        return NextResponse.json(
+          { success: false, message: 'Missing required fields: title, description, type' },
+          { status: 400 }
+        );
+      }
+    } else {
+      if (!title || !description || !category || !type || !duration) {
+        return NextResponse.json(
+          { success: false, message: 'Missing required fields: title, description, category, type, duration' },
+          { status: 400 }
+        );
+      }
     }
 
-    // Validate category exists
-    const categoryExists = await CourseCategory.findById(category);
-    if (!categoryExists) {
-      return NextResponse.json(
-        { success: false, message: 'Invalid category ID' },
-        { status: 400 }
-      );
+    let resolvedCategory = category || null;
+    if (resolvedCategory) {
+      const categoryExists = await CourseCategory.findById(resolvedCategory);
+      if (!categoryExists) {
+        return NextResponse.json(
+          { success: false, message: 'Invalid category ID' },
+          { status: 400 }
+        );
+      }
+    } else if (isWebinar) {
+      // Find a default category if available
+      const defaultCat = await CourseCategory.findOne();
+      if (defaultCat) {
+        resolvedCategory = defaultCat._id;
+      }
+    }
+
+    let calculatedDuration = duration ? parseInt(duration) : 0;
+    if (isWebinar && !calculatedDuration && webinarData?.startTime && webinarData?.endTime) {
+      try {
+        const [sH, sM] = webinarData.startTime.split(':').map(Number);
+        const [eH, eM] = webinarData.endTime.split(':').map(Number);
+        const diff = (eH * 60 + eM) - (sH * 60 + sM);
+        if (diff > 0) calculatedDuration = diff;
+      } catch {
+        calculatedDuration = 60;
+      }
+    }
+    if (isWebinar && !calculatedDuration) {
+      calculatedDuration = 60;
     }
 
     // Create course
     const course = new Course({
       title,
       description,
-      category,
+      category: resolvedCategory,
       instructor: instructor || currentUser.userId,
       type,
-      duration: parseInt(duration),
+      duration: calculatedDuration,
       price: parseFloat(price) || 0,
       thumbnail: thumbnail || '',
       level: level || 'all',
@@ -212,6 +247,7 @@ export async function POST(request: NextRequest) {
       maxStudents: maxStudents ? parseInt(maxStudents) : null,
       isActive: isActive !== undefined ? isActive : true,
       isFeatured: isFeatured || false,
+      webinarData: isWebinar ? webinarData : undefined,
       enrolledStudents: []
     });
 

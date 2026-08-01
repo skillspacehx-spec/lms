@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -58,7 +58,7 @@ const CourseCard = ({ course }) => {
                             </span>
                         </div>
                         <span className="text-[#7AC2F9] font-bold text-lg">
-                            {course.price > 0 ? `£${(course.price / 100).toFixed(2)}` : 'Free'}
+                            {course.price > 0 ? `£${Number(course.price).toFixed(2)}` : 'Free'}
                         </span>
                     </div>
 
@@ -129,15 +129,15 @@ const Courses = () => {
     const [loadingFeatured, setLoadingFeatured] = useState(true);
 
     useEffect(() => {
-        const fetchGcse = async () => {
+        const fetchLiveSessions = async () => {
             try {
-                const res = await fetch('/api/courses?tags=GCSE&limit=3', { credentials: 'include' });
+                const res = await fetch('/api/courses?type=live_session&featured=true&limit=3', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
                     setGcseCourses(data.courses || []);
                 }
             } catch (e) {
-                console.error('Failed to fetch GCSE courses:', e);
+                console.error('Failed to fetch live session courses:', e);
             } finally {
                 setLoadingGcse(false);
             }
@@ -145,7 +145,7 @@ const Courses = () => {
 
         const fetchFeatured = async () => {
             try {
-                const res = await fetch('/api/courses?featured=true&limit=3', { credentials: 'include' });
+                const res = await fetch('/api/courses?featured=true&excludeType=live_session&limit=3', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
                     setFeaturedCourses(data.courses || []);
@@ -157,7 +157,7 @@ const Courses = () => {
             }
         };
 
-        fetchGcse();
+        fetchLiveSessions();
         fetchFeatured();
     }, []);
 
@@ -236,7 +236,7 @@ const Courses = () => {
                     {loadingGcse
                         ? [1, 2, 3].map(i => <LoadingSkeleton key={i} />)
                         : gcseCourses.length === 0
-                            ? <div className="col-span-3 text-center py-12"><p className="text-gray-500">No GCSE courses available yet.</p></div>
+                            ? <div className="col-span-3 text-center py-12"><p className="text-gray-500">No live session courses available yet.</p></div>
                             : gcseCourses.map(course => <CourseCard key={course._id} course={course} />)
                     }
                 </div>

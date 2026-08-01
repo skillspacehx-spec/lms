@@ -423,15 +423,54 @@ function BasicInfoTab({ formData, categories, onInputChange }: any) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Thumbnail Image URL
+            Thumbnail Image
           </label>
-          <input
-            type="url"
-            value={formData.thumbnail}
-            onChange={(e) => onInputChange('thumbnail', e.target.value)}
-            placeholder="https://example.com/image.jpg"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7AC2F9] focus:border-transparent"
-          />
+          <div className="flex items-center gap-3">
+            <input
+              type="url"
+              value={formData.thumbnail}
+              onChange={(e) => onInputChange('thumbnail', e.target.value)}
+              placeholder="https://example.com/image.jpg or upload below"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7AC2F9] focus:border-transparent"
+            />
+            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-3 bg-[#7AC2F9] text-black rounded-lg hover:bg-[#6AB4ED] transition-colors font-medium text-sm">
+              <Upload className="w-4 h-4" />
+              <span>Upload</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const uploadData = new FormData();
+                    uploadData.append('image', file);
+                    const res = await fetch('/api/upload/thumbnail', {
+                      method: 'POST',
+                      credentials: 'include',
+                      body: uploadData
+                    });
+                    const resData = await res.json();
+                    if (resData.success && resData.url) {
+                      onInputChange('thumbnail', resData.url);
+                      alert('Thumbnail uploaded successfully!');
+                    } else {
+                      alert(resData.message || 'Failed to upload thumbnail');
+                    }
+                  } catch (err) {
+                    console.error('Thumbnail upload failed', err);
+                    alert('Upload failed');
+                  }
+                }}
+              />
+            </label>
+          </div>
+          {formData.thumbnail && (
+            <div className="mt-2">
+              <img src={formData.thumbnail} alt="Thumbnail preview" className="w-32 h-20 object-cover rounded-lg border" />
+            </div>
+          )}
         </div>
       </div>
     </div>
