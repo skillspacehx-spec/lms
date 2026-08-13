@@ -134,7 +134,7 @@ const Hero = () => {
           {/* Left Content */}
           <div ref={contentRef} className="z-10 py-8 sm:py-12 lg:py-0 relative">
             <span className="hero-badge text-[#7AC2F9] font-semibold uppercase tracking-wider mb-3 md:mb-4 block text-xs sm:text-sm">
-              WELCOME TO SKILL SHARE
+              WELCOME TO SKILL SPACE
             </span>
             <h1 className="hero-title text-[28px] sm:text-[32px] md:text-[42px] lg:text-[58px] leading-[1.15] font-bold mb-4 md:mb-6 text-[#191919]">
               Empowering Learning. <br /> Inspiring Growth.

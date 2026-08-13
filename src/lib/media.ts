@@ -56,6 +56,8 @@ export class MediaService {
     options: {
       folder?: string;
       public_id?: string;
+      quality?: string;
+      format?: string;
     } = {}
   ): Promise<CloudinaryUploadResult> {
     try {
@@ -65,6 +67,8 @@ export class MediaService {
       };
 
       if (options.public_id) uploadOptions.public_id = options.public_id;
+      if (options.quality) uploadOptions.quality = options.quality;
+      if (options.format) uploadOptions.format = options.format;
 
       const dataURI = typeof file === 'string' ? file : `data:video/mp4;base64,${file.toString('base64')}`;
 
@@ -83,6 +87,8 @@ export class MediaService {
     options: {
       folder?: string;
       public_id?: string;
+      format?: string;
+      mimeType?: string;
     } = {}
   ): Promise<CloudinaryUploadResult> {
     try {
@@ -92,8 +98,10 @@ export class MediaService {
       };
 
       if (options.public_id) uploadOptions.public_id = options.public_id;
+      if (options.format) uploadOptions.format = options.format;
 
-      const dataURI = typeof file === 'string' ? file : `data:application/pdf;base64,${file.toString('base64')}`;
+      const mime = options.mimeType || 'application/octet-stream';
+      const dataURI = typeof file === 'string' ? file : `data:${mime};base64,${file.toString('base64')}`;
 
       const result = await cloudinary.uploader.upload(dataURI, uploadOptions);
 
@@ -182,7 +190,9 @@ export class MediaService {
   static validateFile(
     buffer: Buffer,
     allowedTypes: string[],
-    maxSize: number // in bytes
+    maxSize: number, // in bytes
+    clientMimeType?: string,
+    fileName?: string
   ): { valid: boolean; error?: string } {
     if (buffer.length > maxSize) {
       return { 
@@ -191,28 +201,60 @@ export class MediaService {
       };
     }
 
-    // Basic file type detection (you might want to use a more sophisticated library)
+    // 1. Check if client MIME type is one of the allowed types
+    if (clientMimeType && allowedTypes.includes(clientMimeType)) {
+      return { valid: true };
+    }
+
+    // 2. Derive allowed extensions from allowed MIME types to help validation
+    if (fileName) {
+      const ext = fileName.split('.').pop()?.toLowerCase();
+      if (ext) {
+        const mimeToExtMap: { [key: string]: string[] } = {
+          'application/pdf': ['pdf'],
+          'application/msword': ['doc'],
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['docx'],
+          'application/vnd.ms-powerpoint': ['ppt'],
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['pptx'],
+          'text/plain': ['txt'],
+          'video/mp4': ['mp4', 'm4v'],
+          'video/avi': ['avi'],
+          'video/mov': ['mov', 'qt'],
+          'video/wmv': ['wmv'],
+          'image/jpeg': ['jpg', 'jpeg'],
+          'image/png': ['png'],
+          'image/gif': ['gif']
+        };
+
+        const allowedExtensions = allowedTypes.flatMap(type => mimeToExtMap[type] || []);
+        if (allowedExtensions.includes(ext)) {
+          return { valid: true };
+        }
+      }
+    }
+
+    // 3. Fallback to basic file type magic byte detection
     const header = buffer.toString('hex', 0, 4).toUpperCase();
     const fileTypeMap: { [key: string]: string } = {
       'FFD8': 'image/jpeg',
       '8950': 'image/png',
       '4749': 'image/gif',
       '2550': 'application/pdf',
-      '0000': 'video/mp4', // Simplified - MP4 detection is more complex
+      '0000': 'video/mp4',
     };
 
     const detectedType = Object.entries(fileTypeMap).find(([magic]) => 
       header.startsWith(magic)
     )?.[1];
 
-    if (!detectedType || !allowedTypes.includes(detectedType)) {
-      return { 
-        valid: false, 
-        error: `Invalid file type. Allowed: ${allowedTypes.join(', ')}` 
-      };
+    if (detectedType && allowedTypes.includes(detectedType)) {
+      return { valid: true };
     }
 
-    return { valid: true };
+    return { 
+      valid: false, 
+      error: `Invalid file type. Allowed: ${allowedTypes.join(', ')}` 
+    };
   }
 
   // Get file info from Cloudinary

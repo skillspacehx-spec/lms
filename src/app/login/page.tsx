@@ -158,11 +158,13 @@ function LoginForm() {
                 </label>
               </div> */}
 
-              {/* <div className="text-sm">
-                <a href="#" className="font-medium text-[#7AC2F9] hover:text-[#5BA3E0]">
-                  Forgot password?
-                </a>
-              </div> */}
+              {!(redirect?.startsWith('/dashboard/admin') || searchParams.get('admin') === 'true') && (
+                <div className="flex justify-end text-sm w-full">
+                  <Link href="/forgot-password" className="font-medium text-[#7AC2F9] hover:text-[#5BA3E0]">
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
             </div>
 
             <div>

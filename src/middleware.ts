@@ -13,6 +13,7 @@ interface TokenPayload {
   email: string;
   name: string;
   role: string;
+  isEmailVerified?: boolean;
 }
 
 // Edge-compatible JWT verification using Web Crypto API
@@ -20,13 +21,13 @@ async function verifyTokenEdge(token: string): Promise<TokenPayload | null> {
   try {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    
+
     // Split JWT token
     const parts = token.split('.');
     if (parts.length !== 3) return null;
-    
+
     const [header, payload, signature] = parts;
-    
+
     // Verify signature using Web Crypto API
     const key = await crypto.subtle.importKey(
       'raw',
@@ -35,33 +36,34 @@ async function verifyTokenEdge(token: string): Promise<TokenPayload | null> {
       false,
       ['verify']
     );
-    
+
     const data = encoder.encode(`${header}.${payload}`);
     const signatureBytes = new Uint8Array(
       Array.from(atob(signature.replace(/-/g, '+').replace(/_/g, '/')))
         .map(c => c.charCodeAt(0))
     );
-    
+
     const isValid = await crypto.subtle.verify('HMAC', key, signatureBytes, data);
-    
+
     if (!isValid) return null;
-    
+
     // Decode payload
     const decodedPayload = JSON.parse(decoder.decode(
       new Uint8Array(Array.from(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
         .map(c => c.charCodeAt(0)))
     ));
-    
+
     // Check expiration
     if (decodedPayload.exp && Date.now() >= decodedPayload.exp * 1000) {
       return null;
     }
-    
+
     return {
       userId: decodedPayload.userId,
       email: decodedPayload.email,
       name: decodedPayload.name,
-      role: decodedPayload.role
+      role: decodedPayload.role,
+      isEmailVerified: decodedPayload.isEmailVerified
     };
   } catch (error: any) {
     // Only log in development
@@ -86,7 +88,9 @@ export async function middleware(request: NextRequest) {
     '/progress',
     '/login',
     '/register',
-    '/become-tutor'
+    '/become-tutor',
+    '/verify-pending',
+    '/verify-email'
   ];
 
   // Check if it's an API route - allow all API routes to pass through
@@ -114,18 +118,38 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Enforce email verification for non-admin users on protected routes
+  const isProtectedRoute = pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/book') ||
+    pathname.startsWith('/parent-hub');
+
+  if (user && user.role !== 'admin' && user.isEmailVerified === false) {
+    const isVerificationRoute = pathname === '/verify-pending' || pathname === '/verify-email' || pathname.startsWith('/verify-email/');
+    if (!isVerificationRoute && isProtectedRoute) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔍 Middleware: Email not verified. Redirecting protection to /verify-pending`);
+      }
+      return NextResponse.redirect(new URL('/verify-pending', request.url));
+    }
+  }
+
   // If user is authenticated and tries to access login/register, redirect to appropriate place
   if (user && (pathname === '/login' || pathname === '/register')) {
-    const redirectParam = request.nextUrl.searchParams.get('redirect');
-    
-    // If there's a valid redirect parameter, go there directly  
-    if (redirectParam && (redirectParam.startsWith('/onboarding') || redirectParam.startsWith('/dashboard'))) {
-      return NextResponse.redirect(new URL(redirectParam, request.url));
+    const isUnverifiedUser = user.role !== 'admin' && user.isEmailVerified === false;
+
+    if (!isUnverifiedUser) {
+      const redirectParam = request.nextUrl.searchParams.get('redirect');
+
+      // If there's a valid redirect parameter, go there directly  
+      if (redirectParam && (redirectParam.startsWith('/onboarding') || redirectParam.startsWith('/dashboard'))) {
+        return NextResponse.redirect(new URL(redirectParam, request.url));
+      }
+
+      // Otherwise redirect to role-appropriate dashboard
+      const dashboardPath = `/dashboard/${user.role}`;
+      return NextResponse.redirect(new URL(dashboardPath, request.url));
     }
-    
-    // Otherwise redirect to role-appropriate dashboard
-    const dashboardPath = `/dashboard/${user.role}`;
-    return NextResponse.redirect(new URL(dashboardPath, request.url));
   }
 
   // Allow access to onboarding routes for authenticated users
@@ -146,11 +170,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if it's a protected route
-  const isProtectedRoute = pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/onboarding') ||
-    pathname.startsWith('/book') ||
-    pathname.startsWith('/parent-hub');
+  // Check if it's a protected route (already defined above)
 
   // If it's a protected route and no valid user, redirect to login
   if (isProtectedRoute && !user) {

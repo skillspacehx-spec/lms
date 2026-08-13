@@ -26,6 +26,44 @@ const transporter = createNodemailerTransporter();
 
 // Email templates
 const emailTemplates = {
+  passwordReset: (data: any) => ({
+    subject: `🔑 Reset your password - Learning Hub`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #7AC2F9 0%, #6AB4ED 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">🔑 Reset Your Password</h1>
+        </div>
+        
+        <div style="background: white; padding: 30px; border: 1px solid #e0e0e0; border-top: none;">
+          <h2 style="color: #333; margin-top: 0;">Hi ${data.name},</h2>
+          
+          <p style="font-size: 16px; line-height: 1.6; color: #555;">
+            You requested to reset your password. Please click the button below to set a new password:
+          </p>
+
+          <div style="text-align: center; margin: 40px 0;">
+            <a href="${data.resetUrl}" style="background: #7AC2F9; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px;">
+              Reset Password
+            </a>
+          </div>
+
+          <p style="margin-top: 30px; color: #666; font-size: 14px;">
+            If the button above doesn't work, you can copy and paste the following link into your browser:<br>
+            <a href="${data.resetUrl}" style="color: #7AC2F9; word-break: break-all;">${data.resetUrl}</a>
+          </p>
+
+          <p style="margin-top: 30px; color: #666; font-size: 14px;">
+            This link will expire in 1 hour. If you did not request a password reset, you can safely ignore this email.
+          </p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666;">
+          Best regards,<br>Learning Hub Team
+        </div>
+      </div>
+    `
+  }),
+
   emailVerification: (data: any) => ({
     subject: `🔐 Verify your email address - Learning Hub`,
     html: `
@@ -408,7 +446,7 @@ export class EmailService {
         return await this.sendWithResend(to, subject, html);
       } catch (resendError) {
         console.warn('Resend failed, trying Nodemailer:', resendError);
-        
+
         if (transporter) {
           return await this.sendWithNodemailer(to, subject, html);
         } else {
@@ -422,9 +460,9 @@ export class EmailService {
   }
 
   // Bulk email sending
-  public static async sendBulkEmails(emails: Array<{to: string, template: keyof typeof emailTemplates, data: any}>) {
+  public static async sendBulkEmails(emails: Array<{ to: string, template: keyof typeof emailTemplates, data: any }>) {
     const results = [];
-    
+
     for (const email of emails) {
       try {
         const result = await this.sendEmail(email.to, email.template, email.data);
@@ -460,6 +498,11 @@ export class EmailService {
   // Send verification email
   public static async sendVerificationEmail(userEmail: string, data: { name: string; verifyUrl: string }) {
     return this.sendEmail(userEmail, 'emailVerification', data);
+  }
+
+  // Send password reset email
+  public static async sendPasswordResetEmail(userEmail: string, data: { name: string; resetUrl: string }) {
+    return this.sendEmail(userEmail, 'passwordReset', data);
   }
 
   // Generic send email with custom subject and HTML

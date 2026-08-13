@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import Button from '../common/Button';
 import {
   ArrowRight,
   BookOpen,
@@ -118,10 +119,9 @@ export default function ResourceHubPage({
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-gray-600 md:text-lg">{subtitle}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="#featured" className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800">
+              <Button href="#featured">
                 {primaryCta}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              </Button>
               {/* <Link href="#toolkit" className="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-white px-5 py-3 text-sm font-bold text-blue-800 transition hover:border-blue-400">
                 {secondaryCta}
                 <Download className="h-4 w-4" />

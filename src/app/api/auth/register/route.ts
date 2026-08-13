@@ -132,7 +132,8 @@ export async function POST(request: NextRequest) {
       userId: user._id.toString(),
       email: user.email,
       name: user.name,
-      role: user.role
+      role: user.role,
+      isEmailVerified: false
     });
 
     const redirectTo = role === 'tutor' ? '/onboarding/tutor' : '/verify-pending';

@@ -129,7 +129,8 @@ export async function PUT(
       tags,
       maxStudents,
       isActive,
-      isFeatured
+      isFeatured,
+      webinarData
     } = body;
 
     const updateData: any = {};
@@ -149,6 +150,7 @@ export async function PUT(
     if (maxStudents !== undefined) updateData.maxStudents = maxStudents ? parseInt(maxStudents) : null;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (isFeatured !== undefined) updateData.isFeatured = isFeatured;
+    if (webinarData !== undefined) updateData.webinarData = webinarData;
 
     const course = await Course.findByIdAndUpdate(
       id,

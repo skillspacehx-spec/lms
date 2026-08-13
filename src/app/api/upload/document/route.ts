@@ -40,9 +40,16 @@ export async function POST(request: NextRequest) {
     // Validate file
     const buffer = Buffer.from(await file.arrayBuffer());
     const maxSize = 50 * 1024 * 1024; // 50MB limit
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain'
+    ];
 
-    const validation = MediaService.validateFile(buffer, allowedTypes, maxSize);
+    const validation = MediaService.validateFile(buffer, allowedTypes, maxSize, file.type, file.name);
     if (!validation.valid) {
       return NextResponse.json(
         { success: false, message: validation.error },
@@ -50,11 +57,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let format = file.name.split('.').pop() || '';
+    let publicId = `doc_${Date.now()}_${user.userId}`;
+
+    if (format.toLowerCase() === 'pdf') {
+      // Bypass Cloudinary's default raw PDF delivery restrictions
+      // by uploading it with a .pdf.dat extension
+      publicId = `${publicId}.pdf`;
+      format = 'dat';
+    }
+
     // Upload document to Cloudinary
     const uploadResult = await MediaService.uploadDocument(buffer, {
       folder: `learning-hub/documents/${category || 'general'}`,
-      public_id: `doc_${Date.now()}_${user.userId}`,
-      format: file.name.split('.').pop()
+      public_id: publicId,
+      format: format,
+      mimeType: file.type
     });
 
     return NextResponse.json({

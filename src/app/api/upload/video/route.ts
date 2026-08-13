@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const maxSize = 500 * 1024 * 1024; // 500MB limit
     const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv'];
 
-    const validation = MediaService.validateFile(buffer, allowedTypes, maxSize);
+    const validation = MediaService.validateFile(buffer, allowedTypes, maxSize, file.type, file.name);
     if (!validation.valid) {
       return NextResponse.json(
         { success: false, message: validation.error },

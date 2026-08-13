@@ -175,6 +175,7 @@ export async function GET(
       progress: {
         course: courseProgress.course,
         completedContent: courseProgress.completedContent.length,
+        completedContentIds: courseProgress.completedContent,
         totalContent,
         completionPercentage: courseProgress.completionPercentage,
         totalTimeSpent: courseProgress.totalTimeSpent,

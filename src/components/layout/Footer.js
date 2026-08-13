@@ -60,14 +60,8 @@ const Footer = () => {
     return (
         <footer ref={footerRef} className="relative text-white pt-12 md:pt-16 pb-6 md:pb-8 overflow-hidden">
             {/* Background */}
-            <div className="absolute inset-0 -z-10">
-                <Image
-                    src="/assets/images/footer-bg.png"
-                    alt="Footer Background"
-                    fill
-                    className="object-cover"
-                    quality={100}
-                />
+            <div className="absolute inset-0 -z-10 bg-black">
+
             </div>
 
             <div className="container px-4 md:px-6 relative z-10">
@@ -139,7 +133,7 @@ const Footer = () => {
                 </div>
 
                 <div className="footer-copyright border-t border-gray-800 mt-10 pt-6 text-center text-gray-500 text-xs md:text-sm">
-                   Copyright &copy; {new Date().getFullYear()} Skill Space. All rights reserved.
+                    Copyright &copy; {new Date().getFullYear()} Skill Space. All rights reserved | Powered by HaxoTech.
                 </div>
             </div>
         </footer>

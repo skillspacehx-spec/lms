@@ -71,7 +71,7 @@ export default function CreateCoursePage() {
     startTime: '',
     endTime: '',
     speaker: '',
-    includedWithMembership: false,
+    membershipBands: [] as ('essential' | 'premium' | 'vip')[],
     recordingAvailable: false,
   });
 
@@ -473,18 +473,33 @@ export default function CreateCoursePage() {
                 </div>
               </div>
 
-              {/* Webinar toggles */}
-              <div className="flex flex-wrap gap-6 mt-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={webinarData.includedWithMembership}
-                    onChange={e => setWebinarData(prev => ({ ...prev, includedWithMembership: e.target.checked }))}
-                    className="w-4 h-4 text-[#7AC2F9] rounded focus:ring-[#7AC2F9]"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Included with tutoring membership?</span>
-                </label>
+              {/* Membership band access */}
+              <div className="mt-6">
+                <p className="text-sm font-medium text-gray-700 mb-3">Included with membership band (select all that apply):</p>
+                <div className="flex flex-wrap gap-6">
+                  {(['essential', 'premium', 'vip'] as const).map(band => (
+                    <label key={band} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={webinarData.membershipBands.includes(band)}
+                        onChange={e => {
+                          setWebinarData(prev => ({
+                            ...prev,
+                            membershipBands: e.target.checked
+                              ? [...prev.membershipBands, band]
+                              : prev.membershipBands.filter(b => b !== band)
+                          }));
+                        }}
+                        className="w-4 h-4 text-[#7AC2F9] rounded focus:ring-[#7AC2F9]"
+                      />
+                      <span className="text-sm font-medium text-gray-700 capitalize">{band}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Members subscribed to these bands will get free access. Unticked bands can still purchase the webinar individually.</p>
+              </div>
 
+              <div className="flex flex-wrap gap-6 mt-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"

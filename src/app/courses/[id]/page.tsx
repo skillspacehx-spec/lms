@@ -14,6 +14,63 @@ import {
   Users
 } from 'lucide-react';
 
+function QuizViewer({ questions }: { questions: { question: string; options: string[]; correctAnswer: number }[] }) {
+  const [answers, setAnswers] = React.useState<Record<number, number>>({});
+  const [submitted, setSubmitted] = React.useState(false);
+
+  if (questions.length === 0) return (
+    <div className="border rounded-lg p-6 bg-purple-50 border-purple-200 mb-6 text-center text-gray-500 italic">No questions added yet.</div>
+  );
+
+  const score = submitted ? questions.filter((q, i) => answers[i] === q.correctAnswer).length : 0;
+
+  return (
+    <div className="border rounded-lg p-6 bg-purple-50 border-purple-200 mb-6 space-y-6">
+      <h3 className="text-lg font-semibold text-purple-800">🧠 Quiz</h3>
+      {questions.map((q, qi) => (
+        <div key={qi} className="bg-white rounded-lg p-4 border border-purple-100 space-y-2">
+          <p className="font-medium text-gray-800">{qi + 1}. {q.question}</p>
+          <div className="space-y-1">
+            {q.options.map((opt, oi) => {
+              const isSelected = answers[qi] === oi;
+              const isCorrect = q.correctAnswer === oi;
+              let cls = 'flex items-center gap-2 p-2 rounded cursor-pointer text-sm ';
+              if (submitted) {
+                cls += isCorrect ? 'bg-green-100 text-green-800 font-semibold' : isSelected ? 'bg-red-100 text-red-700' : 'text-gray-600';
+              } else {
+                cls += isSelected ? 'bg-purple-100 text-purple-800 font-medium' : 'hover:bg-gray-50 text-gray-700';
+              }
+              return (
+                <label key={oi} className={cls}>
+                  <input type="radio" name={`q${qi}`} disabled={submitted} checked={isSelected}
+                    onChange={() => setAnswers(prev => ({ ...prev, [qi]: oi }))} className="sr-only" />
+                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-purple-500 bg-purple-500' : 'border-gray-300'}`}>
+                    {isSelected && <span className="w-2 h-2 bg-white rounded-full" />}
+                  </span>
+                  {opt}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      {!submitted ? (
+        <button onClick={() => setSubmitted(true)}
+          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold">
+          Submit Quiz
+        </button>
+      ) : (
+        <div className="text-center p-4 bg-white rounded-lg border border-purple-200">
+          <p className="text-xl font-bold text-purple-700">Score: {score}/{questions.length}</p>
+          <p className="text-sm text-gray-500 mt-1">{score === questions.length ? '🎉 Perfect score!' : 'Review the correct answers above.'}</p>
+          <button onClick={() => { setAnswers({}); setSubmitted(false); }}
+            className="mt-3 text-sm text-purple-600 hover:underline">Try again</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface CourseModule {
   _id: string;
   title: string;
@@ -23,6 +80,10 @@ interface CourseModule {
     videoUrl?: string;
     videoDuration?: number;
     documentUrl?: string;
+    quizQuestions?: { question: string; options: string[]; correctAnswer: number }[];
+    assignmentInstructions?: string;
+    assignmentMaxScore?: number;
+    assignmentDueDate?: string;
   };
   order: number;
   isPreview: boolean;
@@ -41,6 +102,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     description?: string;
     price?: number;
     duration?: number;
+    type?: string;
     enrolledStudents?: Array<{ _id: string; name?: string; avatar?: string }>;
     instructor?: { name?: string; avatar?: string };
     modules?: CourseModule[]
@@ -68,15 +130,35 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('payment') === 'success') {
         setPaymentSuccess(true);
-        // Auto-enroll after successful payment
-        setTimeout(() => {
-          handleEnroll();
-        }, 1000);
-        // Clean URL
+        setTimeout(() => { handleEnroll(); }, 1000);
         window.history.replaceState({}, '', `/courses/${courseId}`);
       }
     }
   }, [courseId]);
+
+  // Load existing progress once enrolled
+  useEffect(() => {
+    if (courseId && isEnrolled && user) {
+      fetch(`/api/courses/${courseId}/progress`, { credentials: 'include' })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.progress?.completedContentIds) {
+            setCompletedModules(data.progress.completedContentIds);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [courseId, isEnrolled, user]);
+
+  useEffect(() => {
+    if (user && course && course.enrolledStudents) {
+      setIsEnrolled(
+        course.enrolledStudents.some((s: { _id: string }) => s._id === user.id)
+      );
+    } else {
+      setIsEnrolled(false);
+    }
+  }, [user, course]);
 
   const fetchCourse = async () => {
     try {
@@ -90,13 +172,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         setCourse(data.course);
         setModules(data.course.modules || []);
         
-        // Check if user is enrolled
-        if (user && data.course.enrolledStudents) {
-          setIsEnrolled(
-            data.course.enrolledStudents.some((s: { _id: string }) => s._id === user.id)
-          );
-        }
-
         // Set first module as selected
         if (data.course.modules && data.course.modules.length > 0) {
           setSelectedModule(data.course.modules[0]);
@@ -284,7 +359,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Module List */}
           <div className="lg:col-span-1">
-            <h2 className="text-2xl font-bold mb-6">Course Content</h2>
+            <h2 className="text-2xl font-bold mb-6">
+              {course.type === 'live_session' ? 'Webinar Content' : 'Course Content'}
+            </h2>
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               {modules.map((module, index) => {
                 const isCompleted = completedModules.includes(module._id);
@@ -349,25 +426,113 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   </div>
                 )}
 
-                {selectedModule.type === 'document' && selectedModule.content.documentUrl && (
-                  <div className="border rounded-lg overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b">
-                      <span className="text-sm font-medium text-gray-700">📄 Document Viewer</span>
-                      <a
-                        href={selectedModule.content.documentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-[#7AC2F9] hover:underline"
-                      >
-                        Open in new tab ↗
-                      </a>
+                {selectedModule.type === 'document' && selectedModule.content.documentUrl && (() => {
+                  const docUrl = selectedModule.content.documentUrl;
+
+                  // Detect file type from URL (stripping query params first)
+                  const urlPath = docUrl.split('?')[0];
+                  const urlLower = urlPath.toLowerCase();
+                  const ext = urlPath.split('.').pop()?.toLowerCase() ?? '';
+
+                  const isPdf = ext === 'pdf' || urlLower.includes('/pdf') || urlLower.includes('.pdf');
+                  const isOffice = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext);
+                  const isTxt = ext === 'txt';
+
+                  // Normalize Cloudinary URL to https if needed
+                  let docUrlProcessed = docUrl;
+                  if (docUrl.startsWith('http://res.cloudinary.com/')) {
+                    docUrlProcessed = docUrl.replace('http://res.cloudinary.com/', 'https://res.cloudinary.com/');
+                  }
+                  const isCloudinary = docUrlProcessed.startsWith('https://res.cloudinary.com/');
+
+                  // Both PDF and Office viewers act as server-side proxies
+                  // — bypassing Cloudinary's iframe embedding restrictions
+                  const viewerSrc = isPdf
+                    ? (isCloudinary ? `/api/documents/proxy?url=${encodeURIComponent(docUrlProcessed)}` : docUrlProcessed)
+                    : isOffice
+                    ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(docUrlProcessed)}`
+                    : isTxt
+                    ? docUrlProcessed
+                    : null;
+
+                  const newTabUrl = isPdf
+                    ? (isCloudinary ? `/api/documents/proxy?url=${encodeURIComponent(docUrlProcessed)}` : docUrlProcessed)
+                    : isOffice
+                    ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(docUrlProcessed)}`
+                    : docUrlProcessed;
+
+                  return (
+                    <div className="border rounded-lg overflow-hidden">
+                      {/* Toolbar */}
+                      <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-gray-700">📄 Document Viewer</span>
+                        <div className="flex items-center gap-3">
+                          <a
+                            href={docUrl}
+                            download
+                            className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-md transition-colors"
+                          >
+                            ⬇ Download
+                          </a>
+                          <a
+                            href={newTabUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[#7AC2F9] hover:underline"
+                          >
+                            Open in new tab ↗
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Viewer */}
+                      {viewerSrc ? (
+                        <iframe
+                          src={viewerSrc}
+                          className="w-full h-[600px]"
+                          title={selectedModule.title}
+                          frameBorder="0"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <div className="w-full h-[300px] flex flex-col items-center justify-center gap-4 bg-gray-50 text-gray-500">
+                          <span className="text-4xl">📎</span>
+                          <p className="text-sm">Preview not available for this file type.</p>
+                          <a
+                            href={docUrl}
+                            download
+                            className="px-4 py-2 bg-[#7AC2F9] text-white rounded-lg text-sm hover:bg-[#5AA3D9] transition-colors"
+                          >
+                            Download File
+                          </a>
+                        </div>
+                      )}
                     </div>
-                    <iframe
-                      src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedModule.content.documentUrl)}&embedded=true`}
-                      className="w-full h-[600px]"
-                      title={selectedModule.title}
-                      frameBorder="0"
-                    />
+                  );
+                })()}
+
+                {/* Quiz Viewer */}
+                {selectedModule.type === 'quiz' && (
+                  <QuizViewer questions={selectedModule.content.quizQuestions || []} />
+                )}
+
+                {/* Assignment Viewer */}
+                {selectedModule.type === 'assignment' && (
+                  <div className="border rounded-lg p-6 bg-amber-50 border-amber-200 mb-6">
+                    <h3 className="text-lg font-semibold text-amber-800 mb-3">📝 Assignment</h3>
+                    {selectedModule.content.assignmentInstructions ? (
+                      <p className="text-gray-700 whitespace-pre-wrap mb-4">{selectedModule.content.assignmentInstructions}</p>
+                    ) : (
+                      <p className="text-gray-500 italic">No instructions provided.</p>
+                    )}
+                    <div className="flex gap-4 text-sm text-gray-600">
+                      {selectedModule.content.assignmentMaxScore && (
+                        <span>🎯 Max Score: <strong>{selectedModule.content.assignmentMaxScore}</strong></span>
+                      )}
+                      {selectedModule.content.assignmentDueDate && (
+                        <span>📅 Due: <strong>{new Date(selectedModule.content.assignmentDueDate).toLocaleDateString()}</strong></span>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -386,11 +551,21 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   </button>
                   
                   <button
-                    onClick={() => {
-                      if (!completedModules.includes(selectedModule._id)) {
-                        setCompletedModules([...completedModules, selectedModule._id]);
+                    onClick={async () => {
+                      const moduleId = selectedModule._id;
+                      if (!completedModules.includes(moduleId)) {
+                        // Persist to backend
+                        try {
+                          await fetch(`/api/courses/${courseId}/progress`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ contentId: moduleId, timeSpent: 0 })
+                          });
+                        } catch {}
+                        setCompletedModules(prev => [...prev, moduleId]);
                       }
-                      const currentIndex = modules.findIndex(m => m._id === selectedModule._id);
+                      const currentIndex = modules.findIndex(m => m._id === moduleId);
                       if (currentIndex < modules.length - 1) {
                         setSelectedModule(modules[currentIndex + 1]);
                       }

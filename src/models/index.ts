@@ -16,6 +16,8 @@ interface IUser {
   isEmailVerified: boolean;
   verificationToken?: string;
   verificationExpires?: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   isVerified: boolean;
   subscription?: mongoose.Types.ObjectId;
   bio?: string;
@@ -130,6 +132,12 @@ const userSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>({
     type: String
   },
   verificationExpires: {
+    type: Date
+  },
+  resetPasswordToken: {
+    type: String
+  },
+  resetPasswordExpires: {
     type: Date
   },
   isVerified: {
@@ -369,6 +377,10 @@ const courseSchema = new mongoose.Schema({
     endTime: String,
     speaker: String,
     includedWithMembership: Boolean,
+    membershipBands: [{
+      type: String,
+      enum: ['essential', 'premium', 'vip']
+    }],
     recordingAvailable: Boolean
   },
   instructor: {
@@ -622,7 +634,7 @@ const subscriptionSchema = new mongoose.Schema({
   plan: {
     type: String,
     required: true,
-    enum: ['basic', 'premium', 'family']
+    enum: ['basic', 'essential', 'premium', 'family', 'vip']
   },
   stripeSubscriptionId: {
     type: String,

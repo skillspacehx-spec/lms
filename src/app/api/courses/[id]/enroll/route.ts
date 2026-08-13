@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/database';
 import { getCurrentUser } from '@/lib/auth';
-import { Course, User } from '@/models';
+import { Course, User, Subscription } from '@/models';
 
-// POST /api/courses/[id]/enroll - Enroll in course
+// POST /api/courses/[id]/enroll - Enroll in course or webinar
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,14 +19,6 @@ export async function POST(
       );
     }
 
-    // Only students and parents can enroll in courses
-    if (!['student', 'parent'].includes(user.role)) {
-      return NextResponse.json(
-        { success: false, message: 'Only students and parents can enroll in courses' },
-        { status: 403 }
-      );
-    }
-
     const resolvedParams = await params;
     const courseId = resolvedParams.id;
     const course = await Course.findById(courseId).populate('instructor', 'name email');
@@ -37,6 +29,18 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    const isWebinar = course.type === 'live_session';
+
+    // For regular courses (non-webinar): only students and parents can enroll
+    if (!isWebinar && !['student', 'parent'].includes(user.role)) {
+      return NextResponse.json(
+        { success: false, message: 'Only students and parents can enrol in courses' },
+        { status: 403 }
+      );
+    }
+
+    // For webinars: any logged-in user can register (students, parents, tutors, educators, admins)
 
     if (!course.isActive) {
       return NextResponse.json(
@@ -61,8 +65,41 @@ export async function POST(
       );
     }
 
-    // For paid courses, check if user has active subscription or payment
-    if (course.price > 0) {
+    // For paid webinars: check if the user's membership band covers this webinar
+    if (isWebinar && course.price > 0) {
+      const userRecord = await User.findById(user.userId);
+      let membershipCoversWebinar = false;
+
+      if (userRecord && ['active', 'trialing'].includes(userRecord.subscriptionStatus || '')) {
+        // Fetch the user's active subscription to get the plan/band name
+        const activeSub = await Subscription.findOne({
+          user: user.userId,
+          status: { $in: ['active'] }
+        });
+        if (activeSub) {
+          const userBand = activeSub.plan; // e.g. 'basic', 'premium', 'family'
+          const webinarBands: string[] = course.webinarData?.membershipBands || [];
+          if (webinarBands.includes(userBand)) {
+            membershipCoversWebinar = true;
+          }
+        }
+      }
+
+      if (!membershipCoversWebinar) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'This webinar is not included in your membership. You can purchase it individually.',
+            requiresPayment: true,
+            coursePrice: course.price
+          },
+          { status: 402 }
+        );
+      }
+    }
+
+    // For paid regular courses: check active subscription
+    if (!isWebinar && course.price > 0) {
       const userRecord = await User.findById(user.userId);
       
       if (!userRecord || !['active', 'trialing'].includes(userRecord.subscriptionStatus || '')) {

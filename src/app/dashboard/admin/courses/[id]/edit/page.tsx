@@ -30,6 +30,10 @@ interface Module {
     videoDuration?: number;
     documentUrl?: string;
     documentCloudinaryId?: string;
+    quizQuestions?: { question: string; options: string[]; correctAnswer: number }[];
+    assignmentInstructions?: string;
+    assignmentMaxScore?: number;
+    assignmentDueDate?: string;
   };
 }
 
@@ -431,6 +435,129 @@ const ModuleModal = ({ onClose, onSave, editingModule }: ModuleModalProps) => {
               </div>
             )}
 
+            {/* Quiz Section */}
+            {moduleData.type === 'quiz' && (
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">Quiz Questions</label>
+                  <button
+                    type="button"
+                    onClick={() => setModuleData(prev => ({
+                      ...prev,
+                      content: {
+                        ...prev.content,
+                        quizQuestions: [...(prev.content?.quizQuestions || []), { question: '', options: ['', '', '', ''], correctAnswer: 0 }]
+                      }
+                    }))}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                  >
+                    + Add Question
+                  </button>
+                </div>
+                {(moduleData.content?.quizQuestions || []).length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">No questions yet. Click "Add Question" to start.</p>
+                )}
+                {(moduleData.content?.quizQuestions || []).map((q, qi) => (
+                  <div key={qi} className="border border-gray-300 rounded-lg p-3 bg-white space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-700">Q{qi + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => setModuleData(prev => ({
+                          ...prev,
+                          content: {
+                            ...prev.content,
+                            quizQuestions: prev.content?.quizQuestions?.filter((_, i) => i !== qi)
+                          }
+                        }))}
+                        className="text-red-500 hover:text-red-600 text-xs"
+                      >Remove</button>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Question text"
+                      value={q.question}
+                      onChange={(e) => {
+                        const updated = [...(moduleData.content?.quizQuestions || [])];
+                        updated[qi] = { ...updated[qi], question: e.target.value };
+                        setModuleData(prev => ({ ...prev, content: { ...prev.content, quizQuestions: updated } }));
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                    <div className="space-y-1">
+                      {q.options.map((opt, oi) => (
+                        <div key={oi} className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name={`correct-${qi}`}
+                            checked={q.correctAnswer === oi}
+                            onChange={() => {
+                              const updated = [...(moduleData.content?.quizQuestions || [])];
+                              updated[qi] = { ...updated[qi], correctAnswer: oi };
+                              setModuleData(prev => ({ ...prev, content: { ...prev.content, quizQuestions: updated } }));
+                            }}
+                            className="text-blue-600"
+                            title="Mark as correct answer"
+                          />
+                          <input
+                            type="text"
+                            placeholder={`Option ${oi + 1}${q.correctAnswer === oi ? ' (correct)' : ''}`}
+                            value={opt}
+                            onChange={(e) => {
+                              const updated = [...(moduleData.content?.quizQuestions || [])];
+                              updated[qi].options[oi] = e.target.value;
+                              setModuleData(prev => ({ ...prev, content: { ...prev.content, quizQuestions: updated } }));
+                            }}
+                            className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400">Select the radio button next to the correct answer.</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Assignment Section */}
+            {moduleData.type === 'assignment' && (
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
+                <label className="block text-sm font-medium text-gray-700">Assignment Details</label>
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">Instructions *</label>
+                  <textarea
+                    rows={4}
+                    placeholder="Describe what students need to do, submission requirements, etc."
+                    value={moduleData.content?.assignmentInstructions || ''}
+                    onChange={(e) => setModuleData(prev => ({ ...prev, content: { ...prev.content, assignmentInstructions: e.target.value } }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-600 mb-1 block">Max Score</label>
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="100"
+                      value={moduleData.content?.assignmentMaxScore || ''}
+                      onChange={(e) => setModuleData(prev => ({ ...prev, content: { ...prev.content, assignmentMaxScore: Number(e.target.value) } }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-600 mb-1 block">Due Date (optional)</label>
+                    <input
+                      type="date"
+                      value={moduleData.content?.assignmentDueDate || ''}
+                      onChange={(e) => setModuleData(prev => ({ ...prev, content: { ...prev.content, assignmentDueDate: e.target.value } }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -513,6 +640,23 @@ export default function EditCoursePage() {
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [tutors, setTutors] = useState<any[]>([]);
+  const [webinarData, setWebinarData] = useState<{
+    audience: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    speaker: string;
+    membershipBands: string[];
+    recordingAvailable: boolean;
+  }>({
+    audience: 'parents',
+    date: '',
+    startTime: '',
+    endTime: '',
+    speaker: '',
+    membershipBands: [],
+    recordingAvailable: false,
+  });
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
@@ -562,6 +706,19 @@ export default function EditCoursePage() {
           learningOutcomes: course.learningOutcomes || [],
           tags: course.tags || []
         });
+
+        // Load webinarData if present
+        if (course.webinarData) {
+          setWebinarData({
+            audience: course.webinarData.audience || 'parents',
+            date: course.webinarData.date || '',
+            startTime: course.webinarData.startTime || '',
+            endTime: course.webinarData.endTime || '',
+            speaker: course.webinarData.speaker || '',
+            membershipBands: course.webinarData.membershipBands || [],
+            recordingAvailable: course.webinarData.recordingAvailable || false,
+          });
+        }
 
         // Load existing modules - FIX: modules are inside course.modules, not data.modules
         if (course.modules && course.modules.length > 0) {
@@ -720,12 +877,16 @@ export default function EditCoursePage() {
     try {
       setIsSubmitting(true);
 
-      // Update course
+      // Update course (include webinarData if applicable)
+      const payload = formData.type === 'live_session'
+        ? { ...formData, webinarData }
+        : formData;
+
       const courseResponse = await fetch(`/api/admin/courses/${courseId}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       const courseData = await courseResponse.json();
@@ -1068,6 +1229,50 @@ export default function EditCoursePage() {
               </label>
             </div>
           </div>
+
+          {/* Webinar Membership Bands (shown only for live_session type) */}
+          {formData.type === 'live_session' && (
+            <div className="bg-white rounded-xl p-6 shadow-md">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                📅 Webinar Access Settings
+              </h2>
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-3">Included with membership band (select all that apply):</p>
+                <div className="flex flex-wrap gap-6">
+                  {(['essential', 'premium', 'vip'] as const).map(band => (
+                    <label key={band} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={webinarData.membershipBands.includes(band)}
+                        onChange={e => {
+                          setWebinarData(prev => ({
+                            ...prev,
+                            membershipBands: e.target.checked
+                              ? [...prev.membershipBands, band]
+                              : prev.membershipBands.filter(b => b !== band)
+                          }));
+                        }}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700 capitalize">{band}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Members subscribed to these bands will get free access. Unticked bands can still purchase the webinar individually.</p>
+              </div>
+              <div className="mt-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={webinarData.recordingAvailable}
+                    onChange={e => setWebinarData(prev => ({ ...prev, recordingAvailable: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Recording available afterwards?</span>
+                </label>
+              </div>
+            </div>
+          )}
 
           {/* Course Modules */}
           <div className="bg-white rounded-xl p-6 shadow-md">

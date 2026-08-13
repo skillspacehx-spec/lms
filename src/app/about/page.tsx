@@ -62,7 +62,7 @@ export default function AboutPage() {
           {/* Left Content */}
           <div>
             <span className="inline-block py-2 px-5 rounded-md bg-[#E9E2FF] text-[#191919] text-xs font-bold tracking-wider mb-4 uppercase">
-              ABOUT SKILL SHARE
+              ABOUT SKILL SPACE
             </span>
             <h2 className="text-4xl md:text-5xl font-black text-[#191919] mb-6 leading-tight">
               Empowering Every Child To Reach Their Full Potential
@@ -117,7 +117,7 @@ export default function AboutPage() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex justify-end">
+            <div className="flex justify-start">
               <div className="flex flex-row gap-4">
                 <Button
                   onClick={handleFindTutor}
