@@ -133,7 +133,7 @@ const Footer = () => {
                 </div>
 
                 <div className="footer-copyright border-t border-gray-800 mt-10 pt-6 text-center text-gray-500 text-xs md:text-sm">
-                    Copyright &copy; {new Date().getFullYear()} Skill Space. All rights reserved | Powered by HaxoTech.
+                    Copyright &copy; {new Date().getFullYear()} Skill Space. All rights reserved | Powered by <a href="https://www.haxotech.com/" target=""_blank> HaxoTech.</a>
                 </div>
             </div>
         </footer>
