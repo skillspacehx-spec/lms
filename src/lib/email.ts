@@ -27,7 +27,7 @@ const transporter = createNodemailerTransporter();
 // Email templates
 const emailTemplates = {
   passwordReset: (data: any) => ({
-    subject: `🔑 Reset your password - Learning Hub`,
+    subject: `🔑 Reset your password - SkillSpace`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #7AC2F9 0%, #6AB4ED 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -58,25 +58,25 @@ const emailTemplates = {
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666;">
-          Best regards,<br>Learning Hub Team
+          Best regards,<br>SkillSpace Team
         </div>
       </div>
     `
   }),
 
   emailVerification: (data: any) => ({
-    subject: `🔐 Verify your email address - Learning Hub`,
+    subject: `🔐 Verify your email address - SkillSpace`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #7AC2F9 0%, #6AB4ED 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">🔐 Verify Your Email</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">🔐 Verify Your Email - SkillSpace</h1>
         </div>
         
         <div style="background: white; padding: 30px; border: 1px solid #e0e0e0; border-top: none;">
           <h2 style="color: #333; margin-top: 0;">Hi ${data.name},</h2>
           
           <p style="font-size: 16px; line-height: 1.6; color: #555;">
-            Thank you for creating an account with Learning Hub! Please verify your email address to get full access to your account and start your learning journey.
+            Thank you for creating an account with SkillSpace! Please verify your email address to get full access to your account and start your learning journey.
           </p>
 
           <div style="text-align: center; margin: 40px 0;">
@@ -96,7 +96,7 @@ const emailTemplates = {
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666;">
-          Best regards,<br>Learning Hub Team
+          Best regards,<br>SkillSpace Team
         </div>
       </div>
     `
@@ -135,7 +135,7 @@ const emailTemplates = {
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666;">
-          Best regards,<br>Learning Hub Team
+          Best regards,<br>SkillSpace Team
         </div>
       </div>
     `
@@ -181,8 +181,8 @@ const emailTemplates = {
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666;">
-          Questions? Contact us at support@learninghub.com<br>
-          Learning Hub Team
+          Questions? Contact us at support@skillspace.education<br>
+          SkillSpace Team
         </div>
       </div>
     `
@@ -227,23 +227,23 @@ const emailTemplates = {
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666;">
-          Need help? Contact us at billing@learninghub.com<br>
-          Learning Hub Team
+          Need help? Contact us at support@skillspace.education<br>
+          SkillSpace Team
         </div>
       </div>
     `
   }),
 
   welcomeEmail: (data: any) => ({
-    subject: `🎉 Welcome to Learning Hub, ${data.name}!`,
+    subject: `🎉 Welcome to SkillSpace, ${data.name}!`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #7AC2F9 0%, #6AB4ED 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 32px;">🎉 Welcome to Learning Hub!</h1>
+          <h1 style="color: white; margin: 0; font-size: 32px;">🎉 Welcome to SkillSpace!</h1>
         </div>
         
         <div style="background: white; padding: 30px; border: 1px solid #e0e0e0; border-top: none;">
-          <h2 style="color: #333; margin-top: 0;">Hi ${data.name}, we're excited to have you!</h2>
+          <h2 style="color: #333; margin-top: 0;">Hi ${data.name}, welcome to SkillSpace!</h2>
           
           <p style="font-size: 16px; line-height: 1.6; color: #555;">
             You've just joined thousands of learners who are transforming their skills and achieving their goals. 
@@ -296,7 +296,7 @@ const emailTemplates = {
         <div style="background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px;">
           <p style="margin: 0; color: #666; font-size: 14px;">
             Happy Learning! 🌟<br>
-            The Learning Hub Team
+            The SkillSpace Team
           </p>
           <p style="margin: 10px 0 0 0; color: #888; font-size: 12px;">
             Follow us: 
@@ -336,7 +336,7 @@ const emailTemplates = {
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666;">
-          Best regards,<br>Learning Hub Team
+          Best regards,<br>SkillSpace Team
         </div>
       </div>
     `
@@ -381,7 +381,7 @@ const emailTemplates = {
         </div>
         
         <div style="background: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666;">
-          Best regards,<br>Learning Hub Team
+          Best regards,<br>SkillSpace Team
         </div>
       </div>
     `
@@ -397,7 +397,7 @@ export class EmailService {
     }
     try {
       const { data, error } = await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'Learning Hub <noreply@learninghub.com>',
+        from: process.env.EMAIL_FROM || 'SkillSpace <noreply@skillspace.education>',
         to: [to],
         subject,
         html,
@@ -422,7 +422,7 @@ export class EmailService {
 
     try {
       const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'Learning Hub <noreply@learninghub.com>',
+        from: process.env.EMAIL_FROM || 'SkillSpace <noreply@skillspace.education>',
         to,
         subject,
         html,
@@ -514,7 +514,7 @@ export class EmailService {
 
     try {
       await transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'Learning Hub <noreply@learninghub.com>',
+        from: process.env.EMAIL_FROM || 'SkillSpace <noreply@skillspace.education>',
         to,
         subject,
         html,
