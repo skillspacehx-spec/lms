@@ -130,11 +130,11 @@ const DiscoverGain = () => {
                 </div>
                 <div className="mt-4 sm:mt-6">
                   <Button
-                    href="/find-tutor"
+                    href="/tutoring"
                     className="bg-[#191919] text-white hover:bg-gray-800 text-sm sm:text-base"
                     icon={<ArrowRight size={16} className="text-[#191919]" />}
                   >
-                    Find a Tutor
+                    Explore Tutoring
                   </Button>
                 </div>
               </div>

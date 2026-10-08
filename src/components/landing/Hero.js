@@ -1,15 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { Plus } from "lucide-react";
+import { Plus, Search, GraduationCap, BookOpen, ArrowRight, Sparkles, Lock, Download } from "lucide-react";
 import Button from "../common/Button";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { searchSkillSpace } from "@/data/discoveryData";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const POPULAR_TOPICS = ["Maths", "Anxiety", "English", "EHCP", "Revision", "Science"];
 
 const Hero = () => {
   const heroRef = useRef(null);
@@ -17,17 +20,31 @@ const Hero = () => {
   const imageRef = useRef(null);
   const floatingBoxRef = useRef(null);
   const arrowRef = useRef(null);
+  const searchContainerRef = useRef(null);
   const { isSignedIn } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Live quick preview results
+  const previewResults = useMemo(() => {
+    if (!searchQuery.trim()) return null;
+    return searchSkillSpace(searchQuery.trim());
+  }, [searchQuery]);
 
   const handleSearch = () => {
-    // Navigate to find tutor page with search query
+    setIsDropdownOpen(false);
     if (searchQuery.trim()) {
-      router.push(`/find-tutor?search=${encodeURIComponent(searchQuery)}`);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     } else {
-      router.push("/find-tutor");
+      router.push("/search");
     }
+  };
+
+  const handleTopicClick = (topic) => {
+    setSearchQuery(topic);
+    setIsDropdownOpen(false);
+    router.push(`/search?q=${encodeURIComponent(topic)}`);
   };
 
   const handleKeyPress = (e) => {
@@ -35,6 +52,17 @@ const Hero = () => {
       handleSearch();
     }
   };
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -137,72 +165,136 @@ const Hero = () => {
               WELCOME TO SKILL SPACE
             </span>
             <h1 className="hero-title text-[28px] sm:text-[32px] md:text-[42px] lg:text-[58px] leading-[1.15] font-bold mb-4 md:mb-6 text-[#191919]">
-              Empowering Learning. <br /> Inspiring Growth.
+              Empowering Learning. <br/>Building Confidence. <br/>Inspiring Growth
             </h1>
             <p className="hero-description text-sm sm:text-base text-gray-600 mb-6 md:mb-8 max-w-lg leading-relaxed">
-              Skill Space is an online learning platform offering expert
-              tutoring, short courses, webinars and parent support. All designed
-              to not only build academic success, but confidence and lifelong
-              skills{" "}
+              Skill Space takes a 360° approach to education — bringing together young people and the families, carers and educators around them. Through tutoring, practical learning, specialist webinars and trusted resources, we support the whole learning ecosystem around the young person to build knowledge, confidence, understanding and better outcomes.{" "}
             </p>
 
-            <div className="flex flex-col gap-4 relative max-w-lg">
-              <div className="hero-search w-full">
+            {/* Discovery Search Bar */}
+            <div ref={searchContainerRef} className="flex flex-col gap-3 relative max-w-lg">
+              <div className="hero-search w-full relative z-30">
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search for tutors, subjects or topics…"
+                    placeholder="Search for subjects or topics…"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setIsDropdownOpen(true);
+                    }}
+                    onFocus={() => {
+                      if (searchQuery.trim()) setIsDropdownOpen(true);
+                    }}
                     onKeyPress={handleKeyPress}
-                    className="w-full px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base rounded-full border-2 border-gray-300 focus:border-[#78bdfd] focus:outline-none text-gray-700 shadow-md"
+                    className="w-full px-4 sm:px-5 py-3 sm:py-3.5 text-sm sm:text-base rounded-full border-2 border-gray-300 focus:border-[#78bdfd] focus:ring-4 focus:ring-[#78bdfd]/20 focus:outline-none text-gray-700 bg-white shadow-md pr-24 sm:pr-28 transition"
                   />
                   <button
                     onClick={handleSearch}
-                    className="absolute right-0.5 sm:right-1 md:right-2 top-1/2 -translate-y-1/2 bg-[#78bdfd] text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 text-sm sm:text-base rounded-full hover:bg-[#5fa3e8] transition-colors font-semibold"
+                    className="absolute right-1 sm:right-1.5 top-1/2 -translate-y-1/2 bg-[#78bdfd] text-[#191919] px-4 sm:px-5 py-2 text-sm sm:text-base rounded-full hover:bg-[#5fa3e8] transition-colors font-bold shadow-sm"
                   >
                     Search
                   </button>
                 </div>
+
+                {/* Instant Discovery Dropdown */}
+                {isDropdownOpen && previewResults && (
+                  <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-40 max-h-[380px] overflow-y-auto">
+                    {/* Header summary */}
+                    <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-600">
+                      <span>Discover Skill Space Offerings</span>
+                      <span className="text-[#0F76B7] font-bold">{previewResults.totalMatches} matches</span>
+                    </div>
+
+                    {/* Subjects Tutoring Options */}
+                    {previewResults.subjects.length > 0 && (
+                      <div className="p-3 border-b border-gray-100">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-[#0F76B7] px-2 mb-1.5 flex items-center gap-1">
+                          <GraduationCap className="w-3.5 h-3.5" /> Subject Tutoring (Membership Required)
+                        </p>
+                        {previewResults.subjects.slice(0, 2).map((s) => (
+                          <div
+                            key={s.id}
+                            onClick={() => {
+                              setIsDropdownOpen(false);
+                              router.push(`/search?q=${encodeURIComponent(s.title)}&filter=tutoring`);
+                            }}
+                            className="p-2 rounded-xl hover:bg-blue-50/60 cursor-pointer transition flex items-center justify-between group"
+                          >
+                            <div>
+                              <p className="text-xs sm:text-sm font-bold text-gray-800 group-hover:text-[#0F76B7]">
+                                {s.title}
+                              </p>
+                              <p className="text-[11px] text-gray-500 line-clamp-1">
+                                1-on-1 Tutoring • {s.levels.slice(0, 3).join(', ')}
+                              </p>
+                            </div>
+                            <span className="text-[11px] text-[#0F76B7] font-semibold flex items-center gap-0.5">
+                              View Option <ArrowRight className="w-3 h-3" />
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Topic Resources & Toolkits */}
+                    {previewResults.resources.length > 0 && (
+                      <div className="p-3 border-b border-gray-100">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 px-2 mb-1.5 flex items-center gap-1">
+                          <BookOpen className="w-3.5 h-3.5" /> Guides &amp; Toolkits ({previewResults.resources[0].category})
+                        </p>
+                        {previewResults.resources.slice(0, 3).map((r) => (
+                          <div
+                            key={r.id}
+                            onClick={() => {
+                              setIsDropdownOpen(false);
+                              router.push(r.href);
+                            }}
+                            className="p-2 rounded-xl hover:bg-emerald-50/60 cursor-pointer transition flex items-center justify-between group"
+                          >
+                            <div>
+                              <p className="text-xs sm:text-sm font-bold text-gray-800 group-hover:text-emerald-700">
+                                {r.title}
+                              </p>
+                              <p className="text-[11px] text-gray-500">
+                                {r.category} • {r.accessType}
+                              </p>
+                            </div>
+                            <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                              {r.accessType === 'Downloadable PDF' ? 'Toolkit' : 'Read'} <ArrowRight className="w-3 h-3" />
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* View Full Search Button */}
+                    <button
+                      onClick={handleSearch}
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-[#78bdfd]/20 to-[#E9E2FF]/40 text-[#0F76B7] hover:bg-blue-50 font-bold text-xs sm:text-sm text-center flex items-center justify-center gap-1.5 transition"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      View all {previewResults.totalMatches} results in Discovery Hub
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Dotted Curved Arrow Below Search */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-16 sm:top-20 pointer-events-none z-10">
-                <svg
-                  width="120"
-                  height="60"
-                  viewBox="0 0 120 60"
-                  fill="none"
-                  className="text-blue-400"
-                >
-                  <path
-                    d="M20 10 Q 60 40, 100 20"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeDasharray="4 4"
-                    fill="none"
-                    className="animate-pulse"
-                  />
-                  <path
-                    d="M95 18 L100 20 L97 25"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="none"
-                    className="animate-pulse"
-                  />
-                </svg>
+              {/* Quick Topic Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-xs font-semibold text-gray-500 mr-1">Try:</span>
+                {POPULAR_TOPICS.map((topic) => (
+                  <button
+                    key={topic}
+                    type="button"
+                    onClick={() => handleTopicClick(topic)}
+                    className="px-2.5 py-0.5 text-xs bg-white/80 hover:bg-white text-gray-700 rounded-full border border-gray-200/80 hover:border-[#7AC2F9] shadow-2xs font-medium transition"
+                  >
+                    {topic}
+                  </button>
+                ))}
               </div>
-
-              {/* Dotted Arrow Decoration */}
-              {/* <div ref={arrowRef} className="absolute left-[240px] top--20 hidden lg:block pointer-events-none">
-                                <Image
-                                    src="/assets/images/heroArrowImg.png"
-                                    alt="arrow"
-                                    width={250}
-                                    height={50}
-                                    className="transform translate-y-2"
-                                />
-                            </div> */}
             </div>
           </div>
 
@@ -227,15 +319,15 @@ const Hero = () => {
               className="hidden lg:block absolute bottom-16 xl:bottom-20 left-[-50px] xl:left-[-70px] bg-white py-3 px-4 md:py-4 md:px-6 lg:py-6 lg:px-10 rounded-2xl shadow-[0px_0px_30px_rgba(0,0,0,0.12)] z-20 max-w-xs"
             >
               <h3 className="text-xl md:text-2xl font-bold text-[#7AC2F9] mb-1">
-                Expert{" "}
+                Experienced{" "}
                 <span className="text-[#191919] text-xl md:text-2xl font-semibold">
                   Tutors
                 </span>
               </h3>
               <p className="text-sm text-gray-600 mt-2">
-                DBS-checked and experienced in working with young people
+                DBS-checked Tutors helping young people thrive
               </p>
-              <div className="flex items-center mt-3">
+              {/* <div className="flex items-center mt-3">
                 <div className="flex -space-x-3 items-center">
                   {[1, 2, 3, 4].map((i) => (
                     <div
@@ -257,7 +349,7 @@ const Hero = () => {
                     <Plus size={14} className="md:size-4" />
                   </button>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Dotted Curved Arrow Below Expert Tutors Box */}

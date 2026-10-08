@@ -12,15 +12,15 @@ const categories = [
     { 
         icon: <BookOpen size={24} />, 
         name: 'Academic Support', 
-        description: 'English, Maths, Science, Homework Skills',
+        description: 'Tutoring in English, Maths, Science and more.',
         color: 'bg-blue-50 text-blue-500', 
         iconBg: 'bg-blue-100',
-        href: '/courses?category=academic-support'
+        href: '/tutoring'
     },
     { 
         icon: <Award size={24} />, 
         name: 'Life Skills & Personal Development', 
-        description: 'Confidence, Communication, Goal Setting, Financial Literacy',
+        description: 'Confidence, communication, goal setting, financial literacy and skills for life.',
         color: 'bg-green-50 text-green-500', 
         iconBg: 'bg-green-100',
         href: '/courses?category=life-skills'
@@ -28,26 +28,26 @@ const categories = [
     { 
         icon: <PenTool size={24} />, 
         name: 'Wellbeing & Personal Growth', 
-        description: 'Mental health, resilience, behaviour awareness and tools to help young people stay safe, balanced and confident',
+        description: 'Wellbeing, resilience, self-awareness and practical tools to help young people feel confident and supported.',
         color: 'bg-purple-50 text-purple-500', 
         iconBg: 'bg-purple-100',
-        href: '/courses?category=wellbeing'
+        href: '/resources?category=wellbeing'
     },
     { 
         icon: <Briefcase size={24} />, 
         name: 'Parent Support & SEND Guidance', 
-        description: 'Practical courses and guidance for adults supporting children with ADHD, dyslexia, behaviour challenges and learning needs',
+        description: 'Practical guidance and resources for parents and carers supporting children with SEND, behaviour challenges and additional learning needs.',
         color: 'bg-rose-50 text-rose-500', 
         iconBg: 'bg-rose-100',
-        href: '/resources?category=parent-support'
+        href: '/resources?category=send'
     },
     { 
         icon: <GraduationCap size={24} />, 
-        name: 'Teacher & Educator Training', 
-        description: 'Professional development for teachers, mentors, and youth practitioners focused on behaviour, engagement, inclusion, and effective practice.',
+        name: 'Educator Training & Development', 
+        description: 'Professional learning for teachers, mentors and youth practitioners, covering behaviour, engagement, inclusion and effective practice.',
         color: 'bg-amber-50 text-amber-500', 
         iconBg: 'bg-amber-100',
-        href: '/courses?category=teacher-training'
+        href: '/resources?type=articles'
     },
 ];
 
@@ -111,9 +111,9 @@ const Categories = () => {
             <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <span className="categories-badge inline-block py-2 px-6 rounded-md bg-[#E9E2FF] text-[#191919] text-xs font-bold tracking-wider mb-6 uppercase">
-                        Explore Courses
+                        Explore
                     </span>
-                    <h2 className="categories-title text-2xl sm:text-3xl md:text-4xl font-bold text-[#191919]">Explore Courses by Category</h2>
+                    <h2 className="categories-title text-2xl sm:text-3xl md:text-4xl font-bold text-[#191919]">Explore Skill Space</h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto">
